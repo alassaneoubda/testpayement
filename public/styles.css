@@ -71,11 +71,9 @@ select {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(145deg, #e11d48, #be123c);
-  color: #fff;
-  font-weight: 700;
+  display: block;
+  object-fit: cover;
+  background: #000;
   box-shadow: var(--shadow);
 }
 
