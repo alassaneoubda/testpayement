@@ -126,7 +126,9 @@ async function applyWebhook({ jobId, status, type, amount, body }) {
     ? state.transactions.find((t) => t.jobId === jobId)
     : null;
 
-  if (!tx && amount != null) {
+  // Fallback par montant UNIQUEMENT si le webhook n'a pas de jobId
+  // (sinon on risque d'associer le webhook d'un autre job à cette transaction)
+  if (!tx && !jobId && amount != null) {
     const wantType = String(type || '').includes('withdraw') ? 'transfer' : 'recharge';
     tx = state.transactions.find(
       (t) =>
@@ -137,7 +139,9 @@ async function applyWebhook({ jobId, status, type, amount, body }) {
   }
 
   const normalized = String(status || '').toLowerCase();
-  const success = ['succeeded', 'success', 'completed', 'paid'].includes(normalized);
+  const success = ['succeeded', 'successful', 'success', 'completed', 'paid'].includes(
+    normalized,
+  );
   const failed = ['failed', 'cancelled', 'canceled', 'expired', 'error'].includes(
     normalized,
   );

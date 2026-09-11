@@ -244,11 +244,16 @@ app.get('/api/status/:jobId', async (req, res) => {
   try {
     const madis = clientOrThrow();
     const purpose = String(req.query.purpose || 'deposit');
-    const result = await madis.status(req.params.jobId, purpose);
+    // Tolère un collage du type "jobid 1272fd48-…" : extrait l'UUID
+    const uuidMatch = String(req.params.jobId || '').match(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+    const jobId = uuidMatch ? uuidMatch[0] : String(req.params.jobId || '').trim();
+    const result = await madis.status(jobId, purpose);
     const status = result?.status || result?.state || null;
     if (status) {
       await wallet.applyWebhook({
-        jobId: req.params.jobId,
+        jobId,
         status,
         type: purpose,
         amount: result?.amount,
@@ -303,7 +308,8 @@ app.post('/webhook/madis', async (req, res) => {
     const jobId = body.jobId || body.id || body.transactionId || null;
     const status = body.status || body.state || body.paymentStatus || null;
     const amount = body.amount ?? body.data?.amount ?? null;
-    const type = body.type || body.purpose || body.event || null;
+    // purpose (deposit/withdraw) est plus fiable que type (souvent "payment.status")
+    const type = body.purpose || body.type || body.event || null;
 
     await wallet.applyWebhook({ jobId, status, type, amount, body });
 

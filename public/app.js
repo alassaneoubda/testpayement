@@ -194,10 +194,15 @@ document.getElementById('transferForm').addEventListener('submit', async (e) => 
 document.getElementById('statusForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const data = formToJson(e.target);
+  // Accepte "jobid 1272fd48-…" ou l'UUID seul : on extrait l'UUID
+  const uuidMatch = String(data.jobId || '').match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+  );
+  const jobId = uuidMatch ? uuidMatch[0] : String(data.jobId || '').trim();
   showRaw('Vérification statut…');
   try {
     const q = new URLSearchParams({ purpose: data.purpose || 'deposit' });
-    const res = await fetch(`/api/status/${encodeURIComponent(data.jobId)}?${q}`);
+    const res = await fetch(`/api/status/${encodeURIComponent(jobId)}?${q}`);
     const json = await res.json();
     showRaw(json);
     if (json.wallet) renderWallet(json.wallet);
