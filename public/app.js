@@ -160,8 +160,15 @@ document.getElementById('rechargeForm').addEventListener('submit', async (e) => 
     if (data.wallet) renderWallet(data.wallet);
     else await loadWallet();
     if (data.result?.redirectUrl) {
-      const open = confirm('Lien de paiement Wave disponible. Ouvrir maintenant ?');
-      if (open) window.open(data.result.redirectUrl, '_blank', 'noopener');
+      const url = String(data.result.redirectUrl);
+      const op = String(formToJson(e.target).operator || data.result.operator || '').toLowerCase();
+      let label = 'paiement';
+      if (url.includes('wave.com') || op === 'wave') label = 'Wave';
+      else if (url.includes('orange') || op === 'orange') label = 'Orange Money';
+      else if (op === 'mtn') label = 'MTN';
+      else if (op === 'moov') label = 'Moov';
+      const open = confirm(`Lien de paiement ${label} disponible. Ouvrir maintenant ?`);
+      if (open) window.open(url, '_blank', 'noopener');
     }
   } catch (err) {
     showRaw({ ok: false, error: err.message });
