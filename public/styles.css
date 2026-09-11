@@ -68,13 +68,13 @@ select {
 }
 
 .brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
   display: block;
-  object-fit: cover;
-  background: #000;
-  box-shadow: var(--shadow);
+  object-fit: contain;
+  background: transparent;
+  box-shadow: none;
 }
 
 .brand strong {
