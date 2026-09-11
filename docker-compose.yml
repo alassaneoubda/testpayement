@@ -1,0 +1,26 @@
+services:
+  paytest:
+    build: .
+    container_name: madis-paytest
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    expose:
+      - '5055'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.payment-paytest.rule=Host(`paytest.madisfinance.com`)
+      - traefik.http.routers.payment-paytest.entrypoints=websecure
+      - traefik.http.routers.payment-paytest.tls=true
+      - traefik.http.routers.payment-paytest.tls.certresolver=letsencrypt
+      - traefik.http.routers.payment-paytest.middlewares=security@file
+      - traefik.http.services.payment-paytest.loadbalancer.server.port=5055
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

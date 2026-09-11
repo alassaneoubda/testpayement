@@ -1,0 +1,19 @@
+{
+  "name": "testapipayement",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Démo portefeuille MADIS — recharge & transfert Mobile Money",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node --use-system-ca src/server.js",
+    "dev": "node --use-system-ca --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

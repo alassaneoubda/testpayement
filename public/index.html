@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MADIS Wallet — démo paiement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">M</span>
+          <div>
+            <strong>MADIS Wallet</strong>
+            <span class="brand-sub">Application de démo</span>
+          </div>
+        </div>
+        <div class="topbar-meta" id="configChip">Connexion…</div>
+      </header>
+
+      <main class="layout">
+        <section class="wallet-hero">
+          <p class="eyebrow">Mon portefeuille</p>
+          <div class="balance-row">
+            <div>
+              <p class="balance-label">Solde disponible</p>
+              <p class="balance" id="balance">—</p>
+              <p class="hold muted" id="holdLine"></p>
+            </div>
+            <button type="button" class="btn ghost" id="refreshWallet">Actualiser</button>
+          </div>
+        </section>
+
+        <section class="tabs" role="tablist">
+          <button type="button" class="tab active" data-tab="recharge" role="tab">
+            Recharger
+          </button>
+          <button type="button" class="tab" data-tab="transfer" role="tab">
+            Transférer
+          </button>
+          <button type="button" class="tab" data-tab="history" role="tab">
+            Historique
+          </button>
+          <button type="button" class="tab" data-tab="setup" role="tab">
+            Réglages
+          </button>
+        </section>
+
+        <div class="panels">
+          <section class="panel active" id="panel-recharge">
+            <div class="panel-head">
+              <h2>Recharger le portefeuille</h2>
+              <p class="muted">
+                L’argent Mobile Money est collecté puis crédité ici après confirmation.
+              </p>
+            </div>
+            <form id="rechargeForm" class="form-card">
+              <div class="fields">
+                <label>
+                  Montant (XOF)
+                  <input name="amount" type="number" value="500" min="1" required />
+                </label>
+                <label>
+                  Téléphone Mobile Money
+                  <input name="userPhone" value="0757613098" required />
+                </label>
+                <label>
+                  Opérateur
+                  <select name="operator">
+                    <option value="mtn">MTN</option>
+                    <option value="orange">Orange</option>
+                    <option value="moov">Moov</option>
+                    <option value="wave">Wave</option>
+                  </select>
+                </label>
+                <label>
+                  Identifiant utilisateur
+                  <input name="userId" value="wallet-user-1" />
+                </label>
+                <label class="span2">
+                  OTP (Orange, si demandé)
+                  <input name="otp" placeholder="Optionnel" />
+                </label>
+              </div>
+              <button type="submit" class="btn primary">Recharger via Mobile Money</button>
+            </form>
+          </section>
+
+          <section class="panel" id="panel-transfer">
+            <div class="panel-head">
+              <h2>Transférer vers Mobile Money</h2>
+              <p class="muted">
+                Débite le portefeuille et envoie l’argent sur un numéro Mobile Money.
+              </p>
+            </div>
+            <form id="transferForm" class="form-card">
+              <div class="fields">
+                <label>
+                  Montant (XOF)
+                  <input name="amount" type="number" value="200" min="1" required />
+                </label>
+                <label>
+                  Téléphone destinataire
+                  <input name="userPhone" value="0757613098" required />
+                </label>
+                <label>
+                  Opérateur
+                  <select name="operator">
+                    <option value="mtn">MTN</option>
+                    <option value="orange">Orange</option>
+                    <option value="moov">Moov</option>
+                    <option value="wave">Wave</option>
+                  </select>
+                </label>
+                <label>
+                  Identifiant utilisateur
+                  <input name="userId" value="wallet-user-1" />
+                </label>
+              </div>
+              <button type="submit" class="btn primary">Envoyer vers Mobile Money</button>
+            </form>
+          </section>
+
+          <section class="panel" id="panel-history">
+            <div class="panel-head row between">
+              <div>
+                <h2>Historique</h2>
+                <p class="muted">Recharges et transferts liés à ce portefeuille.</p>
+              </div>
+              <button type="button" class="btn ghost" id="refreshHistory">Actualiser</button>
+            </div>
+            <div id="txList" class="tx-list">
+              <p class="empty">Aucune opération pour le moment.</p>
+            </div>
+          </section>
+
+          <section class="panel" id="panel-setup">
+            <div class="panel-head">
+              <h2>Réglages & webhook</h2>
+              <p class="muted" id="configStatus">Chargement…</p>
+            </div>
+            <div class="form-card">
+              <p class="setup-label">URL à coller dans le portail marchand → Webhook</p>
+              <div class="copy-row">
+                <code id="webhookUrl">…</code>
+                <button type="button" class="btn ghost" id="copyWebhook">Copier</button>
+              </div>
+              <p class="muted small">
+                Sans webhook public, MADIS ne pourra pas confirmer automatiquement les paiements.
+                Sur Vercel : ajoute aussi cette URL dans
+                <strong>Plateform_payement → Admin → Entreprise → paymentWebhookUrl</strong>
+                (ou Portail marchand → Webhook).
+              </p>
+              <p class="muted small" id="storageHint"></p>
+              <div class="divider"></div>
+              <form id="statusForm" class="inline-form">
+                <label class="grow">
+                  Vérifier un jobId
+                  <input name="jobId" placeholder="job_…" required />
+                </label>
+                <label>
+                  Type
+                  <select name="purpose">
+                    <option value="deposit">recharge</option>
+                    <option value="withdraw">transfert</option>
+                  </select>
+                </label>
+                <button type="submit" class="btn ghost">Vérifier</button>
+              </form>
+              <div class="divider"></div>
+              <button type="button" class="btn ghost danger-text" id="resetWallet">
+                Réinitialiser le portefeuille (0 XOF)
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <aside class="activity">
+          <div class="activity-head">
+            <h2>Journal en direct</h2>
+            <button type="button" class="btn ghost sm" id="refreshActivity">Rafraîchir</button>
+          </div>
+          <p class="muted small">
+            Chaque étape du paiement apparaît ici clairement.
+          </p>
+          <div id="activityList" class="activity-list">
+            <p class="empty">En attente d’activité…</p>
+          </div>
+          <details class="raw-box">
+            <summary>Réponse API brute</summary>
+            <pre id="out">En attente…</pre>
+          </details>
+        </aside>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>
