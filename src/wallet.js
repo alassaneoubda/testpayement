@@ -280,8 +280,8 @@ async function setBalance(balance) {
     err.status = 400;
     throw err;
   }
-  const previous = Number(state.balance || 0);
-  state.balance = value;
+  const previous = availableBalance(state);
+  state.balance = value + Number(state.pendingHold || 0);
   const delta = value - previous;
   state.transactions.unshift({
     id: crypto.randomUUID(),
@@ -298,7 +298,7 @@ async function setBalance(balance) {
   pushActivity(state, {
     level: 'success',
     title: 'Solde du wallet mis à jour',
-    message: `${previous} → ${value} ${state.currency}`,
+    message: `Disponible ${previous} → ${value} ${state.currency}`,
   });
   return save(state);
 }
