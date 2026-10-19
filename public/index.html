@@ -44,6 +44,24 @@
             </div>
             <button type="button" class="btn ghost" id="refreshWallet">Actualiser</button>
           </div>
+          <div class="manual-balance">
+            <label class="switch">
+              <input type="checkbox" id="manualToggle" />
+              <span class="slider" aria-hidden="true"></span>
+              <span class="switch-label">Modifier le solde du wallet</span>
+            </label>
+            <form id="manualBalanceForm" class="manual-form" hidden>
+              <input
+                name="balance"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Nouveau solde (XOF)"
+                required
+              />
+              <button type="submit" class="btn">Mettre à jour le solde</button>
+            </form>
+          </div>
         </section>
 
         <section class="tabs" role="tablist">

@@ -112,6 +112,24 @@ app.post('/api/wallet/reset', async (req, res) => {
   }
 });
 
+app.post('/api/wallet/manual-mode', async (req, res) => {
+  try {
+    await wallet.setManualBalanceEnabled(Boolean(req.body?.enabled));
+    res.json({ ok: true, wallet: await wallet.snapshot() });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post('/api/wallet/balance', async (req, res) => {
+  try {
+    await wallet.setBalance(req.body?.balance);
+    res.json({ ok: true, wallet: await wallet.snapshot() });
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
 app.get('/api/webhooks', async (_req, res) => {
   try {
     const items = await store.loadWebhooks(() => []);

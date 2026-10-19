@@ -6,6 +6,7 @@ function defaultState() {
     balance: 0,
     currency: 'XOF',
     pendingHold: 0,
+    manualBalanceEnabled: false,
     transactions: [],
     activity: [],
     updatedAt: new Date().toISOString(),
@@ -232,6 +233,7 @@ async function snapshot() {
     pendingHold: Number(state.pendingHold || 0),
     available: availableBalance(state),
     currency: state.currency || 'XOF',
+    manualBalanceEnabled: Boolean(state.manualBalanceEnabled),
     updatedAt: state.updatedAt,
     storage: store.backendName(),
     transactions: (state.transactions || []).slice(0, 40),
@@ -250,9 +252,62 @@ async function resetDemo(balance = 0) {
   return save(state);
 }
 
+async function setManualBalanceEnabled(enabled) {
+  const state = await load();
+  state.manualBalanceEnabled = Boolean(enabled);
+  pushActivity(state, {
+    level: 'info',
+    title: state.manualBalanceEnabled
+      ? 'Modification du solde activée'
+      : 'Modification du solde désactivée',
+    message: state.manualBalanceEnabled
+      ? 'Le solde du wallet peut être modifié directement'
+      : 'Modification directe du solde bloquée',
+  });
+  return save(state);
+}
+
+async function setBalance(balance) {
+  const state = await load();
+  if (!state.manualBalanceEnabled) {
+    const err = new Error('Active « Modifier le solde du wallet » pour changer le solde');
+    err.status = 403;
+    throw err;
+  }
+  const value = Number(balance);
+  if (!Number.isFinite(value) || value < 0) {
+    const err = new Error('Solde invalide');
+    err.status = 400;
+    throw err;
+  }
+  const previous = Number(state.balance || 0);
+  state.balance = value;
+  const delta = value - previous;
+  state.transactions.unshift({
+    id: crypto.randomUUID(),
+    type: 'adjustment',
+    status: 'succeeded',
+    amount: Math.abs(delta),
+    direction: delta >= 0 ? 'credit' : 'debit',
+    phone: null,
+    operator: 'manuel',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  if (state.transactions.length > 200) state.transactions.length = 200;
+  pushActivity(state, {
+    level: 'success',
+    title: 'Solde du wallet mis à jour',
+    message: `${previous} → ${value} ${state.currency}`,
+  });
+  return save(state);
+}
+
 module.exports = {
   load,
   snapshot,
+  setManualBalanceEnabled,
+  setBalance,
   createPending,
   attachJob,
   markFailed,

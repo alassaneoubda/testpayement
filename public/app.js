@@ -6,6 +6,8 @@ const out = document.getElementById('out');
 const webhookUrl = document.getElementById('webhookUrl');
 const configStatus = document.getElementById('configStatus');
 const configChip = document.getElementById('configChip');
+const manualToggle = document.getElementById('manualToggle');
+const manualBalanceForm = document.getElementById('manualBalanceForm');
 
 function money(n, currency = 'XOF') {
   const v = Number(n || 0);
@@ -42,6 +44,8 @@ function renderWallet(wallet) {
   } else {
     holdLine.textContent = `Solde brut ${money(wallet.balance, wallet.currency)}`;
   }
+  manualToggle.checked = Boolean(wallet.manualBalanceEnabled);
+  manualBalanceForm.hidden = !wallet.manualBalanceEnabled;
   renderActivity(wallet.activity || []);
   renderTx(wallet.transactions || [], wallet.currency);
 }
@@ -72,8 +76,9 @@ function renderTx(items, currency = 'XOF') {
   }
   txList.innerHTML = items
     .map((t) => {
-      const plus = t.type === 'recharge';
-      const label = plus ? 'Recharge' : 'Transfert';
+      const adjustment = t.type === 'adjustment';
+      const plus = t.type === 'recharge' || (adjustment && t.direction !== 'debit');
+      const label = adjustment ? 'Mise à jour du solde' : plus ? 'Recharge' : 'Transfert';
       const sign = plus ? '+' : '−';
       const when = t.createdAt ? new Date(t.createdAt).toLocaleString('fr-FR') : '';
       return `<article class="tx-item">
@@ -216,6 +221,44 @@ document.getElementById('statusForm').addEventListener('submit', async (e) => {
     else await loadWallet();
   } catch (err) {
     showRaw({ ok: false, error: err.message });
+  }
+});
+
+manualToggle.addEventListener('change', async () => {
+  const enabled = manualToggle.checked;
+  manualBalanceForm.hidden = !enabled;
+  try {
+    const res = await fetch('/api/wallet/manual-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    const data = await res.json();
+    showRaw(data);
+    if (data.wallet) renderWallet(data.wallet);
+  } catch (err) {
+    showRaw({ ok: false, error: err.message });
+    await loadWallet();
+  }
+});
+
+manualBalanceForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  setBusy(e.target, true);
+  try {
+    const res = await fetch('/api/wallet/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ balance: Number(e.target.balance.value) }),
+    });
+    const data = await res.json();
+    showRaw(data);
+    if (data.wallet) renderWallet(data.wallet);
+    if (data.ok) e.target.reset();
+  } catch (err) {
+    showRaw({ ok: false, error: err.message });
+  } finally {
+    setBusy(e.target, false);
   }
 });
 
